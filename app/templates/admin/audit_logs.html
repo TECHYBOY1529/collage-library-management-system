@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Audit Logs & Demo Data Controls | LMS + TQM{% endblock %}
+{% block page_heading %}Security Audit Trail & Demonstration Data Management{% endblock %}
+{% block content %}
+<div class="card card-clean mb-4 border-info">
+    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <h6 class="fw-bold mb-1"><i class="bi bi-database-gear text-info me-1"></i> Safe Academic Demonstration Data Controls</h6>
+            <p class="text-muted small mb-0">
+                All demonstration records carry an explicit <code>is_demo=True</code> flag. Resetting or clearing demo data <strong>never deletes real user accounts or live transactions</strong>.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <form method="POST" action="{{ url_for('manage_demo_data', operation='reseed') }}" data-confirm="Reset and regenerate all labeled [DEMO] records? Real user records will be preserved.">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-arrow-clockwise"></i> Reset & Regenerate Demo Data</button>
+            </form>
+            <form method="POST" action="{{ url_for('manage_demo_data', operation='clear') }}" data-confirm="Remove all labeled [DEMO] records while keeping real user data?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Clear Demo Data Only</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card card-clean">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Administrative & Security Audit Logs ({{ pagination.total }})</span>
+        <form method="GET" action="{{ url_for('admin.audit_logs') }}" class="d-flex gap-2">
+            <input type="text" name="action" value="{{ action_filter }}" class="form-control form-control-sm" placeholder="Filter by action code...">
+            <button type="submit" class="btn btn-sm btn-outline-primary">Filter</button>
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th>Timestamp (UTC)</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th>Details</th>
+                    <th>Tag</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="text-nowrap">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td><code>{{ log.actor_username }}</code></td>
+                    <td><span class="badge bg-light text-dark border">{{ log.action }}</span></td>
+                    <td>{{ log.entity_type }} ({{ log.entity_id or '-' }})</td>
+                    <td>{{ log.details }}</td>
+                    <td>{% if log.is_demo %}<span class="demo-badge">DEMO</span>{% else %}<span class="badge bg-success">LIVE</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

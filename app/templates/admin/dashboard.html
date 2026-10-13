@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}Librarian & Admin Dashboard | LMS + TQM{% endblock %}
+{% block page_heading %}Administrator & Librarian Command Center{% endblock %}
+{% block content %}
+<!-- 8 Required Statistic Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+            <div>
+                <div class="stat-label">Total Books</div>
+                <div class="stat-value">{{ total_books }}</div>
+                <div class="small text-muted">{{ total_copies }} total physical copies</div>
+            </div>
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-book"></i></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+            <div>
+                <div class="stat-label">Available Copies</div>
+                <div class="stat-value text-success">{{ available_copies }}</div>
+                <div class="small text-muted">Ready for immediate issue</div>
+            </div>
+            <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-check2-square"></i></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+            <div>
+                <div class="stat-label">Registered Members</div>
+                <div class="stat-value">{{ registered_members }}</div>
+                <div class="small text-muted">Students, Faculty & Researchers</div>
+            </div>
+            <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="bi bi-people"></i></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+            <div>
+                <div class="stat-label">Active Loans</div>
+                <div class="stat-value">{{ active_loans }}</div>
+                <div class="small text-muted">Currently in circulation</div>
+            </div>
+            <div class="stat-icon bg-secondary bg-opacity-10 text-secondary"><i class="bi bi-arrow-left-right"></i></div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+            <div>
+                <div class="stat-label">Overdue Loans</div>
+                <div class="stat-value text-danger">{{ overdue_loans }}</div>
+                <div class="small text-muted">Past due date</div>
+            </div>
+            <div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-exclamation-octagon"></i></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+            <div>
+                <div class="stat-label">Pending Complaints</div>
+                <div class="stat-value text-warning">{{ pending_complaints }}</div>
+                <div class="small text-muted">Open / In Progress</div>
+            </div>
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-chat-left-dots"></i></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+            <div>
+                <div class="stat-label">Avg Satisfaction Score</div>
+                <div class="stat-value" style="color: var(--lib-teal);">
+                    {{ avg_satisfaction if avg_satisfaction is not none else 'N/A' }}<small class="fs-6 text-muted">/5.0</small>
+                </div>
+                <div class="small text-muted">Member TQM Rating</div>
+            </div>
+            <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-star-fill"></i></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+            <div>
+                <div class="stat-label">Open Improvement Actions</div>
+                <div class="stat-value">{{ open_actions }}</div>
+                <div class="small text-muted">Kaizen Corrective Register</div>
+            </div>
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-tools"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions & Borrowing Trend Chart -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card card-clean h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-bar-chart-line me-1 text-primary"></i> Weekly Circulation & Return Velocity</span>
+                <a href="{{ url_for('admin.loans') }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-circle"></i> Issue / Return Book</a>
+            </div>
+            <div class="card-body">
+                <canvas id="adminBorrowingChart" height="110"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card card-clean h-100">
+            <div class="card-header"><i class="bi bi-lightning-charge me-1 text-warning"></i> Standardized Operations</div>
+            <div class="card-body d-flex flex-column gap-2">
+                <a href="{{ url_for('admin.loans') }}" class="btn btn-outline-primary text-start"><i class="bi bi-box-arrow-up-right me-2"></i>Issue / Return Physical Copy</a>
+                <a href="{{ url_for('admin.books') }}" class="btn btn-outline-secondary text-start"><i class="bi bi-journal-plus me-2"></i>Add Book & Physical Copies</a>
+                <a href="{{ url_for('admin.reservations') }}" class="btn btn-outline-secondary text-start"><i class="bi bi-bookmark-check me-2"></i>Process Reservations Queue</a>
+                <a href="{{ url_for('admin.complaints') }}" class="btn btn-outline-warning text-dark text-start"><i class="bi bi-exclamation-triangle me-2"></i>Resolve Member Complaints</a>
+                <a href="{{ url_for('quality.dashboard') }}" class="btn btn-outline-success text-start"><i class="bi bi-graph-up-arrow me-2"></i>Inspect TQM KPIs & Pareto</a>
+                <a href="{{ url_for('reports.index') }}" class="btn btn-outline-dark text-start"><i class="bi bi-download me-2"></i>Export CSV Operational Reports</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Circulation & Audit Trail -->
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card card-clean">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Recent Circulation Transactions</span>
+                <a href="{{ url_for('admin.loans') }}" class="small text-decoration-none">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Copy Code</th>
+                            <th>Book Title</th>
+                            <th>Member</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ln in recent_loans %}
+                        <tr>
+                            <td class="fw-semibold"><code>{{ ln.copy.copy_code }}</code></td>
+                            <td>
+                                {{ ln.copy.book.title }}
+                                {% if ln.is_demo %}<span class="demo-badge">DEMO</span>{% endif %}
+                            </td>
+                            <td>{{ ln.member.user.full_name }}</td>
+                            <td>{{ ln.due_date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                {% if ln.return_date %}
+                                    <span class="badge bg-secondary">Returned</span>
+                                {% elif ln.is_overdue %}
+                                    <span class="badge bg-danger">Overdue ({{ ln.days_overdue }}d)</span>
+                                {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-3">No loan transactions recorded.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card card-clean">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Recent Administrative Audit Logs</span>
+                <a href="{{ url_for('admin.audit_logs') }}" class="small text-decoration-none">Full Log</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Time</th>
+                            <th>Actor</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in recent_logs %}
+                        <tr>
+                            <td class="text-muted text-nowrap">{{ log.created_at.strftime('%m-%d %H:%M') }}</td>
+                            <td><code>{{ log.actor_username }}</code></td>
+                            <td><span class="badge bg-light text-dark border">{{ log.action }}</span></td>
+                            <td class="text-truncate" style="max-width: 190px;" title="{{ log.details }}">{{ log.details }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">No audit logs found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ctx = document.getElementById('adminBorrowingChart');
+if (ctx) {
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ borrowing_chart.labels | tojson }},
+            datasets: [
+                {
+                    label: 'Books Issued',
+                    data: {{ borrowing_chart.issued | tojson }},
+                    backgroundColor: 'rgba(15, 118, 110, 0.75)',
+                    borderRadius: 4
+                },
+                {
+                    label: 'Books Returned',
+                    data: {{ borrowing_chart.returned | tojson }},
+                    backgroundColor: 'rgba(30, 41, 59, 0.65)',
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+}
+</script>
+{% endblock %}

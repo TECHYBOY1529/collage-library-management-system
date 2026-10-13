@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Complaints & Customer Feedback | LMS + TQM{% endblock %}
+{% block page_heading %}Member Complaints & Customer Satisfaction Feedback{% endblock %}
+{% block content %}
+<div class="card card-clean mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-exclamation-diamond text-warning me-1"></i> Member Complaints Register ({{ complaints|length }})</span>
+        <a href="{{ url_for('quality.rca') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-diagram-3"></i> Launch Fishbone / 5-Whys RCA</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th>ID & Category</th>
+                    <th>Subject & Description</th>
+                    <th>Member</th>
+                    <th>Status & Lead Time</th>
+                    <th>Resolution Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in complaints %}
+                <tr>
+                    <td>
+                        <div><strong>#{{ c.id }}</strong> {% if c.is_demo %}<span class="demo-badge">DEMO</span>{% endif %}</div>
+                        <span class="badge bg-light text-dark border">{{ c.category }}</span>
+                        <span class="badge {% if c.severity in ('High','Critical') %}bg-danger{% else %}bg-secondary{% endif %}">{{ c.severity }}</span>
+                    </td>
+                    <td style="max-width:320px;">
+                        <div class="fw-semibold">{{ c.title }}</div>
+                        <div class="text-muted">{{ c.description }}</div>
+                        {% if c.resolution_notes %}<div class="text-success mt-1"><strong>Resolution:</strong> {{ c.resolution_notes }}</div>{% endif %}
+                    </td>
+                    <td>{{ c.member.user.full_name }}</td>
+                    <td>
+                        <span class="badge {% if c.status == 'Resolved' %}bg-success{% elif c.status == 'In Progress' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %}">
+                            {{ c.status }}
+                        </span>
+                        {% if c.resolution_hours is not none %}
+                        <div class="text-muted mt-1">{{ c.resolution_hours }} hrs lead time</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.complaints') }}" class="d-flex flex-column gap-1" style="min-width:210px;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="complaint_id" value="{{ c.id }}">
+                            <div class="d-flex gap-1">
+                                <select name="status" class="form-select form-select-sm">
+                                    <option value="Open" {% if c.status == 'Open' %}selected{% endif %}>Open</option>
+                                    <option value="In Progress" {% if c.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="Resolved" {% if c.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                                    <option value="Closed" {% if c.status == 'Closed' %}selected{% endif %}>Closed</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                            </div>
+                            <input type="text" name="resolution_notes" class="form-control form-control-sm" placeholder="Resolution note..." value="{{ c.resolution_notes or '' }}">
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card card-clean">
+    <div class="card-header"><i class="bi bi-star-half text-success me-1"></i> Member Customer Satisfaction Feedback ({{ feedbacks|length }})</div>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Member</th>
+                    <th>Category</th>
+                    <th>Rating</th>
+                    <th>Comments</th>
+                    <th>Recurring Flag</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in feedbacks %}
+                <tr>
+                    <td>{{ f.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ f.member.user.full_name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ f.category }}</span></td>
+                    <td class="fw-bold text-warning">{{ f.rating }} / 5 &#9733;</td>
+                    <td>{{ f.comments }} {% if f.is_demo %}<span class="demo-badge">DEMO</span>{% endif %}</td>
+                    <td>
+                        {% if f.is_recurring_concern %}
+                        <span class="badge bg-danger">Recurring Issue</span>
+                        {% else %}
+                        <span class="text-muted">No</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

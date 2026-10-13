@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Member Management | LMS + TQM{% endblock %}
+{% block page_heading %}Registered Library Members{% endblock %}
+{% block content %}
+<div class="card card-clean">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span>Member Directory ({{ members|length }})</span>
+        <form method="GET" action="{{ url_for('admin.members') }}" class="d-flex gap-2">
+            <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search ID, name, dept..." data-table-filter="#membersTable">
+            <button type="submit" class="btn btn-sm btn-primary">Search</button>
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small" id="membersTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Membership ID</th>
+                    <th>Name & Email</th>
+                    <th>Department & Type</th>
+                    <th>Active Loans / Limit</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in members %}
+                <tr>
+                    <td class="fw-semibold"><code>{{ m.membership_number }}</code></td>
+                    <td>
+                        <div class="fw-semibold">
+                            {{ m.user.full_name }}
+                            {% if m.is_demo %}<span class="demo-badge">DEMO</span>{% endif %}
+                        </div>
+                        <div class="text-muted">{{ m.user.email }}</div>
+                    </td>
+                    <td>
+                        <div>{{ m.department }}</div>
+                        <span class="badge bg-light text-dark border">{{ m.member_type }}</span>
+                    </td>
+                    <td>
+                        {{ m.loans.filter_by(return_date=None).count() }} / {{ m.max_books_allowed }}
+                    </td>
+                    <td>
+                        <span class="badge {{ 'bg-success' if m.status == 'Active' else 'bg-danger' }}">
+                            {{ m.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.members') }}" data-confirm="Change membership status for {{ m.user.full_name }}?">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="member_id" value="{{ m.id }}">
+                            <input type="hidden" name="action" value="toggle_status">
+                            <button type="submit" class="btn btn-sm {{ 'btn-outline-danger' if m.status == 'Active' else 'btn-outline-success' }}">
+                                {{ 'Suspend' if m.status == 'Active' else 'Activate' }}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

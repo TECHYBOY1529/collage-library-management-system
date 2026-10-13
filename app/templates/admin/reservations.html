@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Reservations Queue | LMS + TQM{% endblock %}
+{% block page_heading %}Book Reservations & Waiting List Queue{% endblock %}
+{% block content %}
+<div class="card card-clean">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Active & Historical Reservations ({{ reservations|length }})</span>
+        <input type="text" class="form-control form-control-sm" style="max-width:220px;" placeholder="Filter reservations..." data-table-filter="#resTable">
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small" id="resTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Queue #</th>
+                    <th>Book Title</th>
+                    <th>Member</th>
+                    <th>Requested On</th>
+                    <th>Status</th>
+                    <th>Update Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reservations %}
+                <tr>
+                    <td><span class="badge bg-dark">#{{ r.queue_position }}</span></td>
+                    <td>
+                        <div class="fw-semibold">{{ r.book.title }} {% if r.is_demo %}<span class="demo-badge">DEMO</span>{% endif %}</div>
+                        <div class="text-muted">Available Copies: {{ r.book.available_copies_count }}</div>
+                    </td>
+                    <td>{{ r.member.user.full_name }} (<code>{{ r.member.membership_number }}</code>)</td>
+                    <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <span class="badge {% if r.status == 'Ready' %}bg-success{% elif r.status == 'Pending' %}bg-warning text-dark{% elif r.status == 'Fulfilled' %}bg-primary{% else %}bg-secondary{% endif %}">
+                            {{ r.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if r.status in ('Pending', 'Ready') %}
+                        <form method="POST" action="{{ url_for('admin.reservations') }}" class="d-flex gap-1">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="reservation_id" value="{{ r.id }}">
+                            <select name="status" class="form-select form-select-sm" style="width:120px;">
+                                <option value="Ready" {% if r.status == 'Ready' %}selected{% endif %}>Mark Ready</option>
+                                <option value="Fulfilled">Fulfilled</option>
+                                <option value="Cancelled">Cancel</option>
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Apply</button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">Closed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center py-4 text-muted">No reservations recorded.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

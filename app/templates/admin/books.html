@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Book Inventory Management | LMS + TQM{% endblock %}
+{% block page_heading %}Book Catalog & Physical Copy Inventory{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <!-- Search, Filter & Inventory Table -->
+    <div class="col-lg-8">
+        <div class="card card-clean mb-3">
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('admin.books') }}" class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold mb-1">Search Title, ISBN, Author</label>
+                        <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Keyword or ISBN...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold mb-1">Category</label>
+                        <select name="category_id" class="form-select form-select-sm">
+                            <option value="">All Categories</option>
+                            {% for c in categories %}
+                            <option value="{{ c.id }}" {% if selected_category == c.id %}selected{% endif %}>{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold mb-1">Sort By</label>
+                        <select name="sort" class="form-select form-select-sm">
+                            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title (A-Z)</option>
+                            <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                            <option value="isbn" {% if sort_by == 'isbn' %}selected{% endif %}>ISBN</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-funnel"></i> Filter</button>
+                        <a href="{{ url_for('admin.books') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card card-clean">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Catalog Inventory ({{ pagination.total }} titles)</span>
+                <a href="{{ url_for('admin.books', archived='0' if show_archived else '1') }}" class="btn btn-sm btn-outline-secondary">
+                    {{ 'Hide Archived Books' if show_archived else 'Show Archived Books' }}
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ISBN & Shelf</th>
+                            <th>Title & Author</th>
+                            <th>Category</th>
+                            <th>Available / Total</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in books %}
+                        <tr class="{% if b.is_archived %}table-secondary text-muted{% endif %}">
+                            <td>
+                                <div><code>{{ b.isbn }}</code></div>
+                                <span class="badge bg-light text-dark border">Shelf {{ b.shelf_location }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">
+                                    {{ b.title }}
+                                    {% if b.is_demo %}<span class="demo-badge">DEMO</span>{% endif %}
+                                    {% if b.is_archived %}<span class="badge bg-dark">Archived</span>{% endif %}
+                                </div>
+                                <div class="text-muted">{{ b.author.name }} &bull; {{ b.publication_year or '' }}</div>
+                            </td>
+                            <td><span class="badge bg-info bg-opacity-10 text-dark border">{{ b.category.code }}</span></td>
+                            <td>
+                                <span class="badge {% if b.available_copies_count > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ b.available_copies_count }} / {{ b.total_copies_count }} Available
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.book_detail', book_id=b.id) }}" class="btn btn-sm btn-outline-primary">
+                                    Manage Copies
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center py-4 text-muted">No matching books found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if pagination.pages > 1 %}
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                <small class="text-muted">Page {{ pagination.page }} of {{ pagination.pages }}</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if pagination.has_prev %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('admin.books', page=pagination.prev_num, q=q, category_id=selected_category, sort=sort_by) }}">Prev</a></li>
+                        {% endif %}
+                        {% if pagination.has_next %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('admin.books', page=pagination.next_num, q=q, category_id=selected_category, sort=sort_by) }}">Next</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Add New Book & Physical Copies Form -->
+    <div class="col-lg-4">
+        <div class="card card-clean">
+            <div class="card-header"><i class="bi bi-plus-circle me-1 text-primary"></i> Add New Book to Catalog</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.books') }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.isbn.label.text }}</label>
+                        {{ form.isbn(class="form-control form-control-sm", placeholder="978-0-...") }}
+                        {% for e in form.isbn.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.title.label.text }}</label>
+                        {{ form.title(class="form-control form-control-sm") }}
+                        {% for e in form.title.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.author_id.label.text }}</label>
+                        {{ form.author_id(class="form-select form-select-sm") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.publisher_id.label.text }}</label>
+                        {{ form.publisher_id(class="form-select form-select-sm") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.category_id.label.text }}</label>
+                        {{ form.category_id(class="form-select form-select-sm") }}
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold">Year</label>
+                            {{ form.publication_year(class="form-control form-control-sm", value="2024") }}
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold">Shelf</label>
+                            {{ form.shelf_location(class="form-control form-control-sm") }}
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold">Copies</label>
+                            {{ form.initial_copies(class="form-control form-control-sm") }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ form.description.label.text }}</label>
+                        {{ form.description(class="form-control form-control-sm", rows="2") }}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold">
+                        <i class="bi bi-check2-circle"></i> Create Book & Generate Copy IDs
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

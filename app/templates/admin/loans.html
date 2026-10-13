@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Issue & Return Processing | LMS + TQM{% endblock %}
+{% block page_heading %}Standardized Book Issue & Return Circulation Desk{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <!-- Standardized Book Issue Form -->
+    <div class="col-lg-4">
+        <div class="card card-clean">
+            <div class="card-header bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-check2-all me-1"></i> TQM Standardized Book Issue
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.loans') }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ form.copy_id.label.text }}</label>
+                        {{ form.copy_id(class="form-select form-select-sm") }}
+                        {% for e in form.copy_id.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ form.member_id.label.text }}</label>
+                        {{ form.member_id(class="form-select form-select-sm") }}
+                        {% for e in form.member_id.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">{{ form.loan_days.label.text }}</label>
+                            {{ form.loan_days(class="form-control form-control-sm") }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Service Time (sec)</label>
+                            {{ form.processing_time_seconds(class="form-control form-control-sm") }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ form.notes.label.text }}</label>
+                        {{ form.notes(class="form-control form-control-sm", placeholder="Optional desk note") }}
+                    </div>
+                    <div class="form-check p-3 rounded border bg-light mb-3 ms-0">
+                        {{ form.standardized_checklist_verified(class="form-check-input ms-0 me-2") }}
+                        <label class="form-check-label small fw-semibold">
+                            {{ form.standardized_checklist_verified.label.text }}
+                        </label>
+                        {% for e in form.standardized_checklist_verified.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100 py-2 fw-semibold">
+                        <i class="bi bi-arrow-up-right-circle"></i> Issue Physical Copy
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active & Historical Loans Table -->
+    <div class="col-lg-8">
+        <div class="card card-clean">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="btn-group btn-group-sm">
+                    <a href="{{ url_for('admin.loans', status='all') }}" class="btn {{ 'btn-primary' if filter_status=='all' else 'btn-outline-secondary' }}">All ({{ loans|length }})</a>
+                    <a href="{{ url_for('admin.loans', status='active') }}" class="btn {{ 'btn-primary' if filter_status=='active' else 'btn-outline-secondary' }}">Active</a>
+                    <a href="{{ url_for('admin.loans', status='overdue') }}" class="btn {{ 'btn-danger' if filter_status=='overdue' else 'btn-outline-danger' }}">Overdue</a>
+                    <a href="{{ url_for('admin.loans', status='returned') }}" class="btn {{ 'btn-primary' if filter_status=='returned' else 'btn-outline-secondary' }}">Returned</a>
+                </div>
+                <input type="text" class="form-control form-control-sm" style="max-width: 220px;" placeholder="Quick filter loans..." data-table-filter="#loansTable">
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small" id="loansTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Copy & Book</th>
+                            <th>Member</th>
+                            <th>Issued / Due</th>
+                            <th>Status</th>
+                            <th>Return Processing</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ln in loans %}
+                        <tr>
+                            <td>
+                                <div><code>{{ ln.copy.copy_code }}</code> {% if ln.is_demo %}<span class="demo-badge">DEMO</span>{% endif %}</div>
+                                <div class="fw-semibold">{{ ln.copy.book.title }}</div>
+                            </td>
+                            <td>
+                                <div>{{ ln.member.user.full_name }}</div>
+                                <div class="text-muted"><code>{{ ln.member.membership_number }}</code></div>
+                            </td>
+                            <td>
+                                <div>Issued: {{ ln.issue_date.strftime('%Y-%m-%d') }}</div>
+                                <div class="{{ 'text-danger fw-bold' if ln.is_overdue else 'text-muted' }}">Due: {{ ln.due_date.strftime('%Y-%m-%d') }}</div>
+                            </td>
+                            <td>
+                                {% if ln.return_date %}
+                                    <span class="badge bg-secondary">Returned {{ ln.return_date.strftime('%m/%d') }}</span>
+                                    {% if ln.fine %}<div class="text-danger small fw-semibold">Fine: ${{ "%.2f"|format(ln.fine.amount) }}</div>{% endif %}
+                                {% elif ln.is_overdue %}
+                                    <span class="badge bg-danger">Overdue ({{ ln.days_overdue }}d)</span>
+                                {% else %}
+                                    <span class="badge bg-success">Active Loan</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not ln.return_date %}
+                                <form method="POST" action="{{ url_for('admin.return_loan_route', loan_id=ln.id) }}" class="d-flex gap-1 align-items-center">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <select name="return_condition" class="form-select form-select-sm" style="width:95px;" title="Inspected Copy Condition">
+                                        <option value="Good" selected>Good</option>
+                                        <option value="New">New</option>
+                                        <option value="Fair">Fair</option>
+                                        <option value="Damaged">Damaged</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-success text-nowrap">
+                                        <i class="bi bi-box-arrow-in-down-left"></i> Return
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted">Condition: {{ ln.return_condition or 'Good' }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center py-4 text-muted">No circulation records match this filter.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}SPC Quality Control Charts | LMS + TQM{% endblock %}
+{% block page_heading %}Statistical Process Control (SPC) Charts & Control Limits{% endblock %}
+{% block content %}
+<div class="alert alert-info small mb-4">
+    <i class="bi bi-info-circle-fill me-1"></i>
+    <strong>Statistical Process Control (SPC) Methodology:</strong>
+    Upper Control Limits (<strong>UCL = Mean + 3s</strong>) and Lower Control Limits (<strong>LCL = Mean - 3s</strong>) reflect natural process variation from observed database records and are strictly distinguished from management <strong>Business Targets</strong>. A process is never declared statistically in control when sample size is insufficient (<em>n &lt; 5</em>).
+</div>
+
+<div class="row g-4">
+    {% for key, spc in charts.items() %}
+    <div class="col-lg-6">
+        <div class="card card-clean h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold">{{ spc.name }} ({{ spc.unit }})</span>
+                <span class="badge {% if spc.in_statistical_control == True %}bg-success{% elif spc.in_statistical_control == False %}bg-danger{% else %}bg-secondary{% endif %}">
+                    {{ spc.statistical_status }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row text-center small mb-3 g-2">
+                    <div class="col-3"><div class="p-2 border rounded bg-light"><strong>Mean ($\bar{X}$)</strong><br>{{ spc.mean if spc.mean is not none else 'N/A' }}</div></div>
+                    <div class="col-3"><div class="p-2 border rounded bg-light"><strong>3&sigma; UCL</strong><br>{{ spc.ucl if spc.ucl is not none else 'N/A' }}</div></div>
+                    <div class="col-3"><div class="p-2 border rounded bg-light"><strong>3&sigma; LCL</strong><br>{{ spc.lcl if spc.lcl is not none else 'N/A' }}</div></div>
+                    <div class="col-3"><div class="p-2 border rounded bg-warning bg-opacity-10"><strong>Target Goal</strong><br>{{ spc.target_direction }}</div></div>
+                </div>
+                <canvas id="spc_{{ key }}" height="145"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const spcData = {{ charts | tojson }};
+Object.keys(spcData).forEach(function(key) {
+    const item = spcData[key];
+    const el = document.getElementById('spc_' + key);
+    if (!el || !item.labels.length) return;
+
+    const n = item.labels.length;
+    const datasets = [
+        {
+            label: 'Observed Process Value',
+            data: item.values,
+            borderColor: '#162436',
+            backgroundColor: '#162436',
+            borderWidth: 2,
+            tension: 0.15
+        },
+        {
+            label: 'Business Target (' + item.business_target + ')',
+            data: Array(n).fill(item.business_target),
+            borderColor: '#0f766e',
+            borderDash: [4, 4],
+            borderWidth: 2,
+            pointRadius: 0
+        }
+    ];
+
+    if (item.sufficient_data && item.ucl !== null) {
+        datasets.push({
+            label: 'Statistical UCL (+3s = ' + item.ucl + ')',
+            data: Array(n).fill(item.ucl),
+            borderColor: '#dc2626',
+            borderDash: [6, 3],
+            borderWidth: 1.5,
+            pointRadius: 0
+        });
+        datasets.push({
+            label: 'Process Mean (' + item.mean + ')',
+            data: Array(n).fill(item.mean),
+            borderColor: '#64748b',
+            borderWidth: 1,
+            pointRadius: 0
+        });
+        datasets.push({
+            label: 'Statistical LCL (-3s = ' + item.lcl + ')',
+            data: Array(n).fill(item.lcl),
+            borderColor: '#dc2626',
+            borderDash: [6, 3],
+            borderWidth: 1.5,
+            pointRadius: 0
+        });
+    }
+
+    new Chart(el, {
+        type: 'line',
+        data: { labels: item.labels, datasets: datasets },
+        options: { responsive: true }
+    });
+});
+</script>
+{% endblock %}

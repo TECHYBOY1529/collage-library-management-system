@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}PDCA Cycle Management | LMS + TQM{% endblock %}
+{% block page_heading %}Dedicated Plan–Do–Check–Act (PDCA) Quality Module{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        {% for c in cycles %}
+        <div class="card card-clean mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="fw-bold">{{ c.title }}</span>
+                    {% if c.is_demo %}<span class="demo-badge">DEMO</span>{% endif %}
+                </div>
+                <span class="badge bg-primary fs-6">Phase: {{ c.current_phase }}</span>
+            </div>
+            <div class="card-body small">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded bg-light h-100">
+                            <div class="fw-bold text-primary mb-1">1. PLAN</div>
+                            <div><strong>Problem:</strong> {{ c.problem_statement }}</div>
+                            <div><strong>Baseline:</strong> {{ c.baseline_metric }}</div>
+                            <div><strong>Target:</strong> {{ c.target_metric }}</div>
+                            <div><strong>Method:</strong> {{ c.measurement_method }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded bg-light h-100">
+                            <div class="fw-bold text-info mb-1">2. DO</div>
+                            <div><strong>Owner:</strong> {{ c.assigned_owner }}</div>
+                            <div><strong>Intervention:</strong> {{ c.intervention_details or 'Pending execution' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded bg-light h-100">
+                            <div class="fw-bold text-warning mb-1">3. CHECK</div>
+                            <div><strong>Measured Outcome:</strong> {{ c.measured_outcome or 'Awaiting data' }}</div>
+                            <div><strong>Analysis:</strong> {{ c.comparison_analysis or '-' }}</div>
+                            <div><strong>Target Met:</strong> {{ 'Yes' if c.target_achieved else 'Not Yet / In Review' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded bg-light h-100">
+                            <div class="fw-bold text-success mb-1">4. ACT</div>
+                            <div><strong>Standardization:</strong> {{ c.standardization_action or 'Pending standardization' }}</div>
+                            <div><strong>Next Cycle:</strong> {{ c.next_cycle_recommendations or '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advance / Update PDCA Cycle -->
+                <form method="POST" action="{{ url_for('quality.update_pdca', cycle_id=c.id) }}" class="border-top pt-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">Phase</label>
+                            <select name="current_phase" class="form-select form-select-sm">
+                                {% for ph in ['Plan', 'Do', 'Check', 'Act', 'Completed'] %}
+                                <option value="{{ ph }}" {% if c.current_phase == ph %}selected{% endif %}>{{ ph }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold mb-1">Measured Outcome (CHECK)</label>
+                            <input type="text" name="measured_outcome" class="form-control form-control-sm" value="{{ c.measured_outcome or '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">Standardization (ACT)</label>
+                            <input type="text" name="standardization_action" class="form-control form-control-sm" value="{{ c.standardization_action or '' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-sm btn-outline-primary w-100">Update</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card card-clean">
+            <div class="card-header"><i class="bi bi-arrow-repeat text-primary me-1"></i> Launch New PDCA Cycle</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('quality.pdca') }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.title.label.text }}</label>
+                        {{ form.title(class="form-control form-control-sm") }}
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">{{ form.current_phase.label.text }}</label>
+                            {{ form.current_phase(class="form-select form-select-sm") }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">{{ form.assigned_owner.label.text }}</label>
+                            {{ form.assigned_owner(class="form-control form-control-sm") }}
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.problem_statement.label.text }}</label>
+                        {{ form.problem_statement(class="form-control form-control-sm", rows="2") }}
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">{{ form.baseline_metric.label.text }}</label>
+                            {{ form.baseline_metric(class="form-control form-control-sm") }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">{{ form.target_metric.label.text }}</label>
+                            {{ form.target_metric(class="form-control form-control-sm") }}
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.measurement_method.label.text }}</label>
+                        {{ form.measurement_method(class="form-control form-control-sm") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.intervention_details.label.text }}</label>
+                        {{ form.intervention_details(class="form-control form-control-sm", rows="2") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.measured_outcome.label.text }}</label>
+                        {{ form.measured_outcome(class="form-control form-control-sm", rows="2") }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ form.standardization_action.label.text }}</label>
+                        {{ form.standardization_action(class="form-control form-control-sm", rows="2") }}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold">Create PDCA Cycle</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

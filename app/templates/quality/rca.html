@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Root-Cause Analysis (Fishbone & 5 Whys) | LMS + TQM{% endblock %}
+{% block page_heading %}Root-Cause Analysis: Ishikawa Fishbone & 5 Whys Workflow{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <!-- Existing RCAs -->
+    <div class="col-lg-7">
+        {% for r in rcas %}
+        <div class="card card-clean mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold">RCA #{{ r.id }}: {{ r.problem_title }}</span>
+                {% if r.is_demo %}<span class="demo-badge">DEMO</span>{% endif %}
+            </div>
+            <div class="card-body small">
+                <h6 class="fw-bold text-uppercase text-muted small mb-2">Ishikawa Fishbone (6 Categories)</h6>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6"><div class="p-2 border rounded bg-light"><strong>People:</strong> {{ r.fishbone_people or '-' }}</div></div>
+                    <div class="col-md-6"><div class="p-2 border rounded bg-light"><strong>Processes:</strong> {{ r.fishbone_processes or '-' }}</div></div>
+                    <div class="col-md-6"><div class="p-2 border rounded bg-light"><strong>Technology:</strong> {{ r.fishbone_technology or '-' }}</div></div>
+                    <div class="col-md-6"><div class="p-2 border rounded bg-light"><strong>Materials & Resources:</strong> {{ r.fishbone_materials or '-' }}</div></div>
+                    <div class="col-md-6"><div class="p-2 border rounded bg-light"><strong>Environment:</strong> {{ r.fishbone_environment or '-' }}</div></div>
+                    <div class="col-md-6"><div class="p-2 border rounded bg-light"><strong>Policies & Procedures:</strong> {{ r.fishbone_policies or '-' }}</div></div>
+                </div>
+
+                <h6 class="fw-bold text-uppercase text-muted small mb-2">5 Whys Investigation Chain</h6>
+                <ol class="mb-3">
+                    <li><strong>Why 1:</strong> {{ r.why_1 }}</li>
+                    {% if r.why_2 %}<li><strong>Why 2:</strong> {{ r.why_2 }}</li>{% endif %}
+                    {% if r.why_3 %}<li><strong>Why 3:</strong> {{ r.why_3 }}</li>{% endif %}
+                    {% if r.why_4 %}<li><strong>Why 4:</strong> {{ r.why_4 }}</li>{% endif %}
+                    {% if r.why_5 %}<li><strong>Why 5:</strong> {{ r.why_5 }}</li>{% endif %}
+                </ol>
+                <div class="alert alert-success mb-0 py-2">
+                    <strong>Verified Systemic Root Cause:</strong> {{ r.identified_root_cause }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- New RCA Form -->
+    <div class="col-lg-5">
+        <div class="card card-clean">
+            <div class="card-header"><i class="bi bi-diagram-3 text-primary me-1"></i> Conduct Fishbone & 5-Whys Analysis</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('quality.rca') }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.complaint_id.label.text }}</label>
+                        {{ form.complaint_id(class="form-select form-select-sm") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.problem_title.label.text }}</label>
+                        {{ form.problem_title(class="form-control form-control-sm") }}
+                    </div>
+                    <hr class="my-2">
+                    <div class="small fw-bold text-primary mb-2">Fishbone Categories</div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">{{ form.fishbone_people(class="form-control form-control-sm", rows="2", placeholder="1. People") }}</div>
+                        <div class="col-6">{{ form.fishbone_processes(class="form-control form-control-sm", rows="2", placeholder="2. Processes") }}</div>
+                        <div class="col-6">{{ form.fishbone_technology(class="form-control form-control-sm", rows="2", placeholder="3. Technology") }}</div>
+                        <div class="col-6">{{ form.fishbone_materials(class="form-control form-control-sm", rows="2", placeholder="4. Materials & Resources") }}</div>
+                        <div class="col-6">{{ form.fishbone_environment(class="form-control form-control-sm", rows="2", placeholder="5. Environment") }}</div>
+                        <div class="col-6">{{ form.fishbone_policies(class="form-control form-control-sm", rows="2", placeholder="6. Policies & Procedures") }}</div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="small fw-bold text-primary mb-2">5 Whys Chain</div>
+                    <div class="mb-1">{{ form.why_1(class="form-control form-control-sm", placeholder="1st Why (Required)") }}</div>
+                    <div class="mb-1">{{ form.why_2(class="form-control form-control-sm", placeholder="2nd Why") }}</div>
+                    <div class="mb-1">{{ form.why_3(class="form-control form-control-sm", placeholder="3rd Why") }}</div>
+                    <div class="mb-1">{{ form.why_4(class="form-control form-control-sm", placeholder="4th Why") }}</div>
+                    <div class="mb-2">{{ form.why_5(class="form-control form-control-sm", placeholder="5th Why") }}</div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ form.identified_root_cause.label.text }}</label>
+                        {{ form.identified_root_cause(class="form-control form-control-sm", rows="2") }}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold">Save Root-Cause Analysis</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

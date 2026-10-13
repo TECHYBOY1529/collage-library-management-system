@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block page_heading %}Access Denied (403){% endblock %}
+{% block content %}
+<div class="card card-clean p-5 text-center my-4">
+    <h1 class="display-5 text-danger fw-bold"><i class="bi bi-shield-lock"></i> 403 Forbidden</h1>
+    <p class="lead text-muted">You do not have permission to access this resource or another member's private records.</p>
+    <div><a href="{{ url_for('auth.index') }}" class="btn btn-primary">Return to Dashboard</a></div>
+</div>
+{% endblock %}
+{% block auth_content %}
+<div class="card card-clean p-5 text-center my-4">
+    <h1 class="display-5 text-danger fw-bold">403 Forbidden</h1>
+    <p class="lead text-muted">Unauthorized access attempt blocked by server-side RBAC policy.</p>
+    <div><a href="{{ url_for('auth.login') }}" class="btn btn-primary">Go to Login</a></div>
+</div>
+{% endblock %}

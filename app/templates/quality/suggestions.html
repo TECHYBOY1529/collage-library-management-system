@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Standardization & Staff Suggestions | LMS + TQM{% endblock %}
+{% block page_heading %}Standardization (SOPs) & Employee Involvement{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card card-clean mb-4">
+            <div class="card-header bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-check2-square me-1"></i> Standardized Library Operating Procedures (SOPs)
+            </div>
+            <div class="card-body small">
+                <ol class="mb-0 space-y-2">
+                    <li class="mb-2"><strong>SOP-CIRC-01 (Book Issue):</strong> Verify active Member ID &rarr; Confirm copy status is <code>Available</code> &rarr; Inspect physical condition &rarr; Stamp due date &rarr; Record service processing time for SPC tracking.</li>
+                    <li class="mb-2"><strong>SOP-CIRC-02 (Book Return):</strong> Inspect returned copy condition (New/Good/Fair/Damaged) &rarr; Route <code>Damaged</code> copies to <code>Maintenance</code> automatically &rarr; Assess overdue fine via active <code>FinePolicy</code> &rarr; Auto-promote next pending <code>Reservation</code> in queue.</li>
+                    <li><strong>SOP-AUD-03 (Weekly Shelf Verification):</strong> Audit physical copies row-by-row and toggle <code>inventory_verified</code> to maintain Inventory Accuracy KPI &ge; 98%.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="card card-clean">
+            <div class="card-header">Employee Involvement & Staff Suggestions ({{ suggestions|length }})</div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title & Process Area</th>
+                            <th>Proposal & Expected Benefit</th>
+                            <th>Status</th>
+                            <th>Review</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in suggestions %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ s.title }}</div>
+                                <span class="badge bg-light text-dark border">{{ s.process_area }}</span>
+                            </td>
+                            <td>
+                                <div>{{ s.suggestion_details }}</div>
+                                <div class="text-success mt-1"><strong>Benefit:</strong> {{ s.expected_benefit }}</div>
+                            </td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if 'Approved' in s.status else 'bg-info text-dark' }}">{{ s.status }}</span>
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('quality.suggestions') }}" class="d-flex gap-1">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="action_type" value="review">
+                                    <input type="hidden" name="suggestion_id" value="{{ s.id }}">
+                                    <select name="status" class="form-select form-select-sm" style="width:140px;">
+                                        <option value="Submitted" {% if s.status=='Submitted' %}selected{% endif %}>Submitted</option>
+                                        <option value="Under Review" {% if s.status=='Under Review' %}selected{% endif %}>Under Review</option>
+                                        <option value="Approved & Standardized" {% if 'Approved' in s.status %}selected{% endif %}>Approved & Standardized</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card card-clean">
+            <div class="card-header"><i class="bi bi-lightbulb text-warning me-1"></i> Submit Staff Kaizen Suggestion</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('quality.suggestions') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action_type" value="create">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Suggestion Title</label>
+                        <input type="text" name="title" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Process Area</label>
+                        <select name="process_area" class="form-select form-select-sm">
+                            <option value="Circulation & Issue/Return">Circulation & Issue/Return</option>
+                            <option value="Inventory & Shelf Auditing">Inventory & Shelf Auditing</option>
+                            <option value="Member Onboarding & Support">Member Onboarding & Support</option>
+                            <option value="Digital Catalog & Reservations">Digital Catalog & Reservations</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Proposed Process Standardization</label>
+                        <textarea name="suggestion_details" class="form-control form-control-sm" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Expected Quality Benefit</label>
+                        <textarea name="expected_benefit" class="form-control form-control-sm" rows="2" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold">Record Staff Suggestion</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

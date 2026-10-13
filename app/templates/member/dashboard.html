@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Member Portal | LMS + TQM{% endblock %}
+{% block page_heading %}Member Portal &mdash; {{ member.user.full_name }} ({{ member.membership_number }}){% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-label">Active Loans</div>
+            <div class="stat-value">{{ active_loans|length }} / {{ member.max_books_allowed }}</div>
+            <div class="small text-muted">{{ member.member_type }} borrowing limit</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-label">Overdue Items</div>
+            <div class="stat-value {{ 'text-danger' if overdue_count > 0 else 'text-success' }}">{{ overdue_count }}</div>
+            <div class="small text-muted">Check due dates below</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-label">Active Reservations</div>
+            <div class="stat-value">{{ active_reservations|length }}</div>
+            <div class="small text-muted">Hold queue status</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-label">Outstanding Fines</div>
+            <div class="stat-value {{ 'text-danger' if total_unpaid > 0 else 'text-success' }}">${{ "%.2f"|format(total_unpaid) }}</div>
+            <div class="small text-muted">Unpaid balance</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card card-clean mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>My Current Active Loans</span>
+                <a href="{{ url_for('member.catalog') }}" class="btn btn-sm btn-primary"><i class="bi bi-search"></i> Browse Catalog</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Copy Code</th>
+                            <th>Book Title</th>
+                            <th>Issue Date</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ln in active_loans %}
+                        <tr>
+                            <td><code>{{ ln.copy.copy_code }}</code></td>
+                            <td class="fw-semibold">{{ ln.copy.book.title }}</td>
+                            <td>{{ ln.issue_date.strftime('%Y-%m-%d') }}</td>
+                            <td class="{{ 'text-danger fw-bold' if ln.is_overdue else '' }}">{{ ln.due_date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                {% if ln.is_overdue %}
+                                    <span class="badge bg-danger">Overdue ({{ ln.days_overdue }}d)</span>
+                                {% else %}
+                                    <span class="badge bg-success">On Time</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center py-4 text-muted">You have no active loans.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card card-clean">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>My Recent TQM Complaints & Status</span>
+                <a href="{{ url_for('member.feedback_complaints') }}" class="btn btn-sm btn-outline-primary">Submit Feedback / Complaint</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Subject</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Resolution Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in my_complaints %}
+                        <tr>
+                            <td class="fw-semibold">{{ c.title }}</td>
+                            <td>{{ c.category }}</td>
+                            <td><span class="badge {{ 'bg-success' if c.status=='Resolved' else 'bg-warning text-dark' }}">{{ c.status }}</span></td>
+                            <td class="text-muted">{{ c.resolution_notes or 'Awaiting review' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center py-3 text-muted">No complaints submitted.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card card-clean">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Recent Notifications & Alerts</span>
+                <a href="{{ url_for('member.notifications') }}" class="small text-decoration-none">All Notifications</a>
+            </div>
+            <div class="list-group list-group-flush small">
+                {% for n in notifications %}
+                <div class="list-group-item {% if not n.is_read %}bg-light fw-semibold{% endif %}">
+                    <div class="d-flex justify-content-between">
+                        <span>{{ n.title }}</span>
+                        <span class="text-muted">{{ n.created_at.strftime('%m-%d %H:%M') }}</span>
+                    </div>
+                    <div class="text-muted fw-normal mt-1">{{ n.message }}</div>
+                </div>
+                {% else %}
+                <div class="list-group-item text-center py-4 text-muted">No notifications yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

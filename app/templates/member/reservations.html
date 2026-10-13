@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}My Reservations | LMS + TQM{% endblock %}
+{% block page_heading %}My Book Reservations & Hold Queue{% endblock %}
+{% block content %}
+<div class="card card-clean">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>My Reservations ({{ reservations|length }})</span>
+        <a href="{{ url_for('member.catalog') }}" class="btn btn-sm btn-primary">Reserve Another Book</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th>Book Title</th>
+                    <th>Queue Position</th>
+                    <th>Requested Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reservations %}
+                <tr>
+                    <td class="fw-semibold">{{ r.book.title }}</td>
+                    <td>#{{ r.queue_position }}</td>
+                    <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <span class="badge {% if r.status == 'Ready' %}bg-success{% elif r.status == 'Pending' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                            {{ r.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if r.status in ('Pending', 'Ready') %}
+                        <form method="POST" action="{{ url_for('member.reservations') }}" data-confirm="Cancel this reservation?">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="reservation_id" value="{{ r.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center py-4 text-muted">You have no book reservations.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

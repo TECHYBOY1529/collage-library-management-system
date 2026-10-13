@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block page_heading %}Page Not Found (404){% endblock %}
+{% block content %}
+<div class="card card-clean p-5 text-center my-4">
+    <h1 class="display-5 text-secondary fw-bold"><i class="bi bi-exclamation-circle"></i> 404 Not Found</h1>
+    <p class="lead text-muted">The requested record or page could not be found in the library catalog.</p>
+    <div><a href="{{ url_for('auth.index') }}" class="btn btn-primary">Return to Dashboard</a></div>
+</div>
+{% endblock %}
+{% block auth_content %}
+<div class="card card-clean p-5 text-center my-4">
+    <h1 class="display-5 text-secondary fw-bold">404 Not Found</h1>
+    <div><a href="{{ url_for('auth.login') }}" class="btn btn-primary">Return Home</a></div>
+</div>
+{% endblock %}

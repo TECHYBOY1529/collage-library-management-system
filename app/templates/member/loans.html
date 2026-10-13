@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}My Borrowing History | LMS + TQM{% endblock %}
+{% block page_heading %}Personal Loans & Borrowing History{% endblock %}
+{% block content %}
+<div class="card card-clean">
+    <div class="card-header">Borrowing & Return History ({{ loans|length }})</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th>Loan #</th>
+                    <th>Copy Code</th>
+                    <th>Book Title</th>
+                    <th>Issue Date</th>
+                    <th>Due Date</th>
+                    <th>Return Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ln in loans %}
+                <tr>
+                    <td>#{{ ln.id }}</td>
+                    <td><code>{{ ln.copy.copy_code }}</code></td>
+                    <td class="fw-semibold">{{ ln.copy.book.title }}</td>
+                    <td>{{ ln.issue_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ ln.due_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ ln.return_date.strftime('%Y-%m-%d') if ln.return_date else '-' }}</td>
+                    <td>
+                        {% if ln.return_date %}
+                            <span class="badge bg-secondary">Returned</span>
+                        {% elif ln.is_overdue %}
+                            <span class="badge bg-danger">Overdue ({{ ln.days_overdue }}d)</span>
+                        {% else %}
+                            <span class="badge bg-success">Active</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center py-4 text-muted">No borrowing history found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

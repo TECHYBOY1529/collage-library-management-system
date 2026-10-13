@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}My Fines | LMS + TQM{% endblock %}
+{% block page_heading %}Personal Fine Ledger{% endblock %}
+{% block content %}
+<div class="card card-clean">
+    <div class="card-header">Assessed Overdue Fines ({{ fines|length }})</div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th>Fine #</th>
+                    <th>Book Title</th>
+                    <th>Reason</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in fines %}
+                <tr>
+                    <td>#{{ f.id }}</td>
+                    <td class="fw-semibold">{{ f.loan.copy.book.title }}</td>
+                    <td>{{ f.reason }}</td>
+                    <td class="fw-bold text-danger">${{ "%.2f"|format(f.amount) }}</td>
+                    <td>
+                        <span class="badge {{ 'bg-success' if f.status == 'Paid' else ('bg-secondary' if f.status == 'Waived' else 'bg-danger') }}">
+                            {{ f.status }}
+                        </span>
+                    </td>
+                    <td>{{ f.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center py-4 text-muted">No fines on your membership account.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Fine Policies & Assessments | LMS + TQM{% endblock %}
+{% block page_heading %}Configurable Fine Policy & Overdue Assessments{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card card-clean">
+            <div class="card-header"><i class="bi bi-sliders me-1 text-primary"></i> Configure Active Fine Policy</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.fines') }}">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ form.loan_duration_days.label.text }}</label>
+                        {{ form.loan_duration_days(class="form-control form-control-sm") }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ form.fine_per_day.label.text }}</label>
+                        {{ form.fine_per_day(class="form-control form-control-sm") }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ form.grace_period_days.label.text }}</label>
+                        {{ form.grace_period_days(class="form-control form-control-sm") }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ form.max_fine_cap.label.text }}</label>
+                        {{ form.max_fine_cap(class="form-control form-control-sm") }}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold">Update Fine Policy</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card card-clean">
+            <div class="card-header">Member Fine Ledger ({{ fines|length }})</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fine ID</th>
+                            <th>Member</th>
+                            <th>Book & Reason</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in fines %}
+                        <tr>
+                            <td>#{{ f.id }}</td>
+                            <td>{{ f.member.user.full_name }} (<code>{{ f.member.membership_number }}</code>)</td>
+                            <td>
+                                <div class="fw-semibold">{{ f.loan.copy.book.title }}</div>
+                                <div class="text-muted">{{ f.reason }}</div>
+                            </td>
+                            <td class="fw-bold text-danger">${{ "%.2f"|format(f.amount) }}</td>
+                            <td>
+                                <span class="badge {% if f.status == 'Paid' %}bg-success{% elif f.status == 'Waived' %}bg-secondary{% else %}bg-danger{% endif %}">
+                                    {{ f.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if f.status == 'Unpaid' %}
+                                <div class="d-flex gap-1">
+                                    <form method="POST" action="{{ url_for('admin.update_fine_status', fine_id=f.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="status" value="Paid">
+                                        <button type="submit" class="btn btn-sm btn-success">Mark Paid</button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.update_fine_status', fine_id=f.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="status" value="Waived">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Waive</button>
+                                    </form>
+                                </div>
+                                {% else %}
+                                <span class="text-muted">Settled {{ f.paid_at.strftime('%Y-%m-%d') if f.paid_at else '' }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center py-4 text-muted">No fines assessed.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Authors, Publishers & Categories | LMS + TQM{% endblock %}
+{% block page_heading %}Catalog Metadata: Authors, Publishers & Categories{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <!-- Authors -->
+    <div class="col-md-4">
+        <div class="card card-clean h-100">
+            <div class="card-header">Authors ({{ authors|length }})</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.metadata') }}" class="mb-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="entity_kind" value="author">
+                    <div class="input-group input-group-sm mb-2">
+                        <input type="text" name="name" class="form-control" placeholder="New Author Name" required>
+                        <button class="btn btn-primary" type="submit">Add</button>
+                    </div>
+                </form>
+                <div class="list-group list-group-flush small" style="max-height:340px;overflow-y:auto;">
+                    {% for a in authors %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>{{ a.name }} {% if a.is_demo %}<span class="demo-badge">DEMO</span>{% endif %}</span>
+                        <span class="badge bg-light text-dark border">{{ a.books.count() }} books</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Publishers -->
+    <div class="col-md-4">
+        <div class="card card-clean h-100">
+            <div class="card-header">Publishers ({{ publishers|length }})</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.metadata') }}" class="mb-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="entity_kind" value="publisher">
+                    <div class="input-group input-group-sm mb-2">
+                        <input type="text" name="name" class="form-control" placeholder="New Publisher Name" required>
+                        <button class="btn btn-primary" type="submit">Add</button>
+                    </div>
+                </form>
+                <div class="list-group list-group-flush small" style="max-height:340px;overflow-y:auto;">
+                    {% for p in publishers %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>{{ p.name }} {% if p.is_demo %}<span class="demo-badge">DEMO</span>{% endif %}</span>
+                        <span class="badge bg-light text-dark border">{{ p.books.count() }} books</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="col-md-4">
+        <div class="card card-clean h-100">
+            <div class="card-header">Categories ({{ categories|length }})</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.metadata') }}" class="mb-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="entity_kind" value="category">
+                    <div class="row g-1 mb-2">
+                        <div class="col-7"><input type="text" name="name" class="form-control form-control-sm" placeholder="Category Name" required></div>
+                        <div class="col-3"><input type="text" name="code" class="form-control form-control-sm" placeholder="Code" required></div>
+                        <div class="col-2"><button class="btn btn-sm btn-primary w-100" type="submit">Add</button></div>
+                    </div>
+                </form>
+                <div class="list-group list-group-flush small" style="max-height:340px;overflow-y:auto;">
+                    {% for c in categories %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><strong>{{ c.code }}</strong> &mdash; {{ c.name }}</span>
+                        <span class="badge bg-light text-dark border">{{ c.books.count() }} books</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

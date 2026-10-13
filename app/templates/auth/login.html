@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Login | College Library & TQM System{% endblock %}
+{% block auth_content %}
+<div class="row justify-content-center align-items-center min-vh-75">
+    <div class="col-lg-10">
+        <div class="card card-clean overflow-hidden shadow">
+            <div class="row g-0">
+                <div class="col-md-6 p-5 text-white d-flex flex-column justify-content-between" style="background: linear-gradient(145deg, #162436 0%, #0f766e 100%);">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-journal-bookmark-fill fs-2 text-info"></i>
+                            <h3 class="mb-0 fw-bold">Athena LMS + TQM</h3>
+                        </div>
+                        <p class="text-white-50 mb-4">
+                            Academic Library Management System Integrated with Total Quality Management (TQM) Practices.
+                        </p>
+                        <ul class="list-unstyled small space-y-2">
+                            <li class="mb-2"><i class="bi bi-check2-circle text-info me-2"></i>Physical Copy Inventory & Standardized Circulation</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-info me-2"></i>Kaizen Continuous Improvement & PDCA Deming Cycles</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-info me-2"></i>Pareto 80/20 Complaint Analysis & Fishbone / 5-Whys RCA</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-info me-2"></i>3-Sigma Statistical Process Control (SPC) Charts & 10 KPIs</li>
+                        </ul>
+                    </div>
+                    <div class="mt-4 pt-3 border-top border-light border-opacity-25">
+                        <div class="small fw-semibold text-uppercase text-info mb-2">Quick Academic Demo Evaluators (Local Only)</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-sm btn-light" onclick="fillDemo('admin_demo','Admin@123')">
+                                <i class="bi bi-person-gear"></i> Librarian / Admin
+                            </button>
+                            <button type="button" class="btn btn-sm btn-info text-dark fw-semibold" onclick="fillDemo('tqm_demo','Quality@123')">
+                                <i class="bi bi-graph-up"></i> Quality Manager
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-light" onclick="fillDemo('member_demo','Member@123')">
+                                <i class="bi bi-mortarboard"></i> Student Member
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 p-5 bg-white">
+                    <h4 class="fw-bold mb-1">Sign In</h4>
+                    <p class="text-muted small mb-4">Access your role-based library or quality workspace</p>
+                    <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">{{ form.username.label.text }}</label>
+                            {{ form.username(class="form-control", id="login-username", placeholder="Enter username") }}
+                            {% for err in form.username.errors %}<div class="text-danger small mt-1">{{ err }}</div>{% endfor %}
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold small">{{ form.password.label.text }}</label>
+                            {{ form.password(class="form-control", id="login-password", placeholder="Enter password") }}
+                            {% for err in form.password.errors %}<div class="text-danger small mt-1">{{ err }}</div>{% endfor %}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Workspace
+                        </button>
+                    </form>
+                    <hr class="my-4">
+                    <div class="text-center small">
+                        New student or faculty member?
+                        <a href="{{ url_for('auth.register') }}" class="fw-semibold text-decoration-none">Register for Library Membership</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function fillDemo(u, p) {
+    document.getElementById('login-username').value = u;
+    document.getElementById('login-password').value = p;
+}
+</script>
+{% endblock %}

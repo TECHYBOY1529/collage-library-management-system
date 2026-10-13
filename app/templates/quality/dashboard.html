@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}TQM & KPI Quality Dashboard | LMS + TQM{% endblock %}
+{% block page_heading %}Total Quality Management (TQM) & KPI Analytics Center{% endblock %}
+{% block content %}
+<!-- Kaizen & Voice of Customer Summary Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Customer Satisfaction</div>
+            <div class="stat-value text-success">
+                {{ satisfaction.average_score if satisfaction.average_score is not none else 'N/A' }}<small class="fs-6 text-muted">/5.0</small>
+            </div>
+            <div class="small text-muted">{{ satisfaction.total_responses }} feedback ratings ({{ satisfaction.recurring_concerns_count }} recurring concerns)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Pareto Vital Few</div>
+            <div class="stat-value text-primary">{{ pareto.vital_few_categories|length }} <small class="fs-6 text-muted">categories</small></div>
+            <div class="small text-muted">Drive ~80% of {{ pareto.total_complaints }} total complaints</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Kaizen Actions Status</div>
+            <div class="stat-value">{{ action_counts['Completed'] }} <small class="fs-6 text-muted">done</small></div>
+            <div class="small">
+                <span class="text-primary">{{ action_counts['Open'] }} Open</span> &bull;
+                <span class="text-info">{{ action_counts['In Progress'] }} Active</span> &bull;
+                <span class="text-danger fw-semibold">{{ action_counts['Overdue'] }} Overdue</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">PDCA Deming Cycles</div>
+            <div class="stat-value">{{ pdca_cycles|length }}</div>
+            <div class="small text-muted">Structured Plan-Do-Check-Act loops</div>
+        </div>
+    </div>
+</div>
+
+<!-- Pareto Analysis & Customer Satisfaction Trend Charts -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card card-clean h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-bar-chart-steps text-primary me-1"></i> Pareto Analysis of Member Complaints (80/20 Rule)</span>
+                <span class="badge bg-primary">Vital Few: {{ pareto.vital_few_categories|join(', ') or 'N/A' }}</span>
+            </div>
+            <div class="card-body">
+                <canvas id="paretoChart" height="125"></canvas>
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm table-bordered align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Complaint Category</th>
+                                <th>Count</th>
+                                <th>Individual %</th>
+                                <th>Cumulative %</th>
+                                <th>Pareto Classification</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in pareto.table_rows %}
+                            <tr class="{{ 'table-warning' if row.is_vital_few else '' }}">
+                                <td class="fw-semibold">{{ row.category }}</td>
+                                <td>{{ row.count }}</td>
+                                <td>{{ row.individual_pct }}%</td>
+                                <td class="fw-bold">{{ row.cumulative_pct }}%</td>
+                                <td>
+                                    {% if row.is_vital_few %}
+                                    <span class="badge bg-danger">Vital Few (Primary Root-Cause Focus)</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Useful Many</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card card-clean h-100">
+            <div class="card-header"><i class="bi bi-heart-pulse text-success me-1"></i> Customer Satisfaction Trend & Dimension Scores</div>
+            <div class="card-body">
+                <canvas id="satisfactionTrendChart" height="135"></canvas>
+                <h6 class="fw-bold small text-uppercase text-muted mt-3 mb-2">Satisfaction by Service Dimension</h6>
+                <div class="list-group list-group-flush small">
+                    {% for cat, info in satisfaction.category_averages.items() %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-1">
+                        <span>{{ cat }} <small class="text-muted">(n={{ info.count }})</small></span>
+                        <span class="badge {{ 'bg-success' if info.average >= 4.0 else ('bg-warning text-dark' if info.average >= 3.0 else 'bg-danger') }}">
+                            {{ info.average }} / 5.0
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 10 Required Key Performance Indicators (KPIs) with Formulas & Data Sources -->
+<div class="card card-clean mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-speedometer text-info me-1"></i> 10 Core TQM Key Performance Indicators (KPIs) &mdash; Formulas & Live Database Metrics</span>
+        <a href="{{ url_for('reports.export_tqm_kpis_csv') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> Export KPIs CSV</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>KPI Name</th>
+                    <th>Measured Value</th>
+                    <th>Business Target</th>
+                    <th>Status</th>
+                    <th>Mathematical Formula</th>
+                    <th>Measurement Period</th>
+                    <th>Verified Data Source</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for k in kpis %}
+                <tr>
+                    <td class="fw-bold">{{ k.id }}</td>
+                    <td class="fw-semibold">{{ k.name }}</td>
+                    <td class="fs-6 fw-bold text-primary">{{ k.value }}</td>
+                    <td><code>{{ k.target }}</code></td>
+                    <td>
+                        <span class="badge {% if k.status == 'On Target' %}bg-success{% elif k.status == 'Needs Attention' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                            {{ k.status }}
+                        </span>
+                    </td>
+                    <td><code class="text-dark">{{ k.formula }}</code></td>
+                    <td>{{ k.measurement_period }}</td>
+                    <td class="text-muted">{{ k.data_source }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Active PDCA Cycles Summary -->
+<div class="card card-clean">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-arrow-repeat text-success me-1"></i> Active PDCA (Plan–Do–Check–Act) Quality Cycles</span>
+        <a href="{{ url_for('quality.pdca') }}" class="btn btn-sm btn-primary">Manage PDCA Module</a>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for c in pdca_cycles %}
+            <div class="col-md-6">
+                <div class="pdca-step h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <h6 class="fw-bold mb-0">{{ c.title }}</h6>
+                        <span class="badge bg-dark">Phase: {{ c.current_phase }}</span>
+                    </div>
+                    <div class="small text-muted mb-2">Owner: {{ c.assigned_owner }} &bull; Baseline: <strong>{{ c.baseline_metric }}</strong> &rarr; Target: <strong>{{ c.target_metric }}</strong></div>
+                    <div class="small"><strong>Measured Outcome:</strong> {{ c.measured_outcome or 'Measurement in progress' }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Pareto Chart (Bars + Cumulative % Line + 80% Cutoff)
+const pCtx = document.getElementById('paretoChart');
+if (pCtx) {
+    new Chart(pCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ pareto.categories | tojson }},
+            datasets: [
+                {
+                    type: 'line',
+                    label: 'Cumulative %',
+                    data: {{ pareto.cumulative_pct | tojson }},
+                    borderColor: '#dc2626',
+                    backgroundColor: '#dc2626',
+                    borderWidth: 2.5,
+                    yAxisID: 'y1',
+                    tension: 0.2
+                },
+                {
+                    type: 'bar',
+                    label: 'Complaint Count',
+                    data: {{ pareto.counts | tojson }},
+                    backgroundColor: 'rgba(22, 36, 54, 0.82)',
+                    borderRadius: 4,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true, position: 'left', title: { display: true, text: 'Complaints Count' } },
+                y1: { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Cumulative %' } }
+            }
+        }
+    });
+}
+
+// Satisfaction Trend Chart
+const sCtx = document.getElementById('satisfactionTrendChart');
+if (sCtx) {
+    new Chart(sCtx, {
+        type: 'line',
+        data: {
+            labels: {{ satisfaction.trend_labels | tojson }},
+            datasets: [{
+                label: 'Daily Avg Satisfaction (1-5)',
+                data: {{ satisfaction.trend_values | tojson }},
+                borderColor: '#0f766e',
+                backgroundColor: 'rgba(15, 118, 110, 0.15)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { min: 1, max: 5 } }
+        }
+    });
+}
+</script>
+{% endblock %}

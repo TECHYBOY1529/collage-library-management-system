@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Kaizen Continuous Improvement Register | LMS + TQM{% endblock %}
+{% block page_heading %}Kaizen Continuous Improvement Register{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card card-clean">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="btn-group btn-group-sm">
+                    <a href="{{ url_for('quality.kaizen', status='all') }}" class="btn {{ 'btn-primary' if status_filter=='all' else 'btn-outline-secondary' }}">All</a>
+                    <a href="{{ url_for('quality.kaizen', status='open') }}" class="btn {{ 'btn-primary' if status_filter=='open' else 'btn-outline-secondary' }}">Open</a>
+                    <a href="{{ url_for('quality.kaizen', status='in progress') }}" class="btn {{ 'btn-primary' if status_filter=='in progress' else 'btn-outline-secondary' }}">In Progress</a>
+                    <a href="{{ url_for('quality.kaizen', status='overdue') }}" class="btn {{ 'btn-danger' if status_filter=='overdue' else 'btn-outline-danger' }}">Overdue</a>
+                    <a href="{{ url_for('quality.kaizen', status='completed') }}" class="btn {{ 'btn-success' if status_filter=='completed' else 'btn-outline-success' }}">Completed</a>
+                </div>
+                <span class="small text-muted">{{ actions|length }} Kaizen Actions</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Problem & Root Cause</th>
+                            <th>Corrective Action & Owner</th>
+                            <th>Target & Status</th>
+                            <th>Expected vs Measured Result</th>
+                            <th>Update</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in actions %}
+                        {% set disp = a.computed_display_status %}
+                        <tr>
+                            <td style="max-width:220px;">
+                                <div class="fw-semibold">{{ a.problem_description }}</div>
+                                <div class="text-muted mt-1"><strong>Root Cause:</strong> {{ a.identified_root_cause }}</div>
+                            </td>
+                            <td style="max-width:220px;">
+                                <div>{{ a.proposed_corrective_action }}</div>
+                                <div class="mt-1"><span class="badge bg-light text-dark border"><i class="bi bi-person"></i> {{ a.assigned_owner }}</span> <span class="badge bg-secondary">{{ a.priority }}</span></div>
+                            </td>
+                            <td>
+                                <div>Target: <strong>{{ a.target_completion_date.strftime('%Y-%m-%d') }}</strong></div>
+                                <span class="badge {% if disp == 'Completed' %}bg-success{% elif disp == 'Overdue' %}bg-danger{% elif disp == 'In Progress' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %}">
+                                    {{ disp }}
+                                </span>
+                            </td>
+                            <td style="max-width:220px;">
+                                <div><strong>Expected:</strong> {{ a.expected_result }}</div>
+                                {% if a.measured_result %}<div class="text-success mt-1"><strong>Measured:</strong> {{ a.measured_result }}</div>{% endif %}
+                                {% if a.completion_notes %}<div class="text-muted small"><em>{{ a.completion_notes }}</em></div>{% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('quality.update_kaizen', action_id=a.id) }}" class="d-flex flex-column gap-1" style="min-width:175px;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <select name="status" class="form-select form-select-sm">
+                                        <option value="Open" {% if a.status == 'Open' %}selected{% endif %}>Open</option>
+                                        <option value="In Progress" {% if a.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                        <option value="Completed" {% if a.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                    </select>
+                                    <input type="text" name="measured_result" class="form-control form-control-sm" placeholder="Measured result..." value="{{ a.measured_result or '' }}">
+                                    <input type="text" name="completion_notes" class="form-control form-control-sm" placeholder="Completion notes..." value="{{ a.completion_notes or '' }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center py-4 text-muted">No Kaizen improvement actions found for this filter.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card card-clean">
+            <div class="card-header"><i class="bi bi-plus-circle text-primary me-1"></i> Register Kaizen Corrective Action</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('quality.kaizen') }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.rca_id.label.text }}</label>
+                        {{ form.rca_id(class="form-select form-select-sm") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.problem_description.label.text }}</label>
+                        {{ form.problem_description(class="form-control form-control-sm", rows="2") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.identified_root_cause.label.text }}</label>
+                        {{ form.identified_root_cause(class="form-control form-control-sm", rows="2") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.proposed_corrective_action.label.text }}</label>
+                        {{ form.proposed_corrective_action(class="form-control form-control-sm", rows="2") }}
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-7">
+                            <label class="form-label small fw-semibold">{{ form.assigned_owner.label.text }}</label>
+                            {{ form.assigned_owner(class="form-control form-control-sm") }}
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small fw-semibold">{{ form.priority.label.text }}</label>
+                            {{ form.priority(class="form-select form-select-sm") }}
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ form.target_completion_date.label.text }}</label>
+                        {{ form.target_completion_date(class="form-control form-control-sm", type="date") }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ form.expected_result.label.text }}</label>
+                        {{ form.expected_result(class="form-control form-control-sm", rows="2") }}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold">Add to Kaizen Register</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

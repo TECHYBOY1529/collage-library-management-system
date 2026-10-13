@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Manage Book & Copies | {{ book.title }}{% endblock %}
+{% block page_heading %}Book Details & Physical Copy Tracking{% endblock %}
+{% block content %}
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <a href="{{ url_for('admin.books') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Catalog</a>
+    <form method="POST" action="{{ url_for('admin.toggle_archive_book', book_id=book.id) }}" data-confirm="Are you sure you want to {{ 'restore' if book.is_archived else 'archive' }} this book?">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm {{ 'btn-success' if book.is_archived else 'btn-outline-danger' }}">
+            <i class="bi bi-archive"></i> {{ 'Restore Book to Active Catalog' if book.is_archived else 'Archive Book' }}
+        </button>
+    </form>
+</div>
+
+<div class="row g-4">
+    <!-- Physical Copies & Shelf Audit -->
+    <div class="col-lg-7">
+        <div class="card card-clean mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Physical Copies for <strong>{{ book.title }}</strong></span>
+                <form method="POST" action="{{ url_for('admin.add_copy_route', book_id=book.id) }}" class="d-flex gap-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <select name="condition" class="form-select form-select-sm" style="width:auto;">
+                        <option value="New">New</option>
+                        <option value="Good" selected>Good</option>
+                        <option value="Fair">Fair</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-plus"></i> Add Physical Copy</button>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Unique Copy ID</th>
+                            <th>Availability Status</th>
+                            <th>Condition</th>
+                            <th>TQM Shelf Audit</th>
+                            <th>Toggle Audit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in copies %}
+                        <tr>
+                            <td class="fw-semibold"><code>{{ c.copy_code }}</code></td>
+                            <td>
+                                <span class="badge {% if c.status == 'Available' %}bg-success{% elif c.status == 'Issued' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                    {{ c.status }}
+                                </span>
+                            </td>
+                            <td>{{ c.condition }}</td>
+                            <td>
+                                {% if c.inventory_verified %}
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success">Verified Accurate</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Discrepancy Flagged</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.verify_copy_audit', copy_id=c.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                        {{ 'Flag Discrepant' if c.inventory_verified else 'Mark Verified' }}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Book Metadata -->
+    <div class="col-lg-5">
+        <div class="card card-clean">
+            <div class="card-header">Edit Bibliographic Metadata</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.book_detail', book_id=book.id) }}">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">ISBN</label>
+                        {{ form.isbn(class="form-control form-control-sm") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Title</label>
+                        {{ form.title(class="form-control form-control-sm") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Author</label>
+                        {{ form.author_id(class="form-select form-select-sm") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Publisher</label>
+                        {{ form.publisher_id(class="form-select form-select-sm") }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Category</label>
+                        {{ form.category_id(class="form-select form-select-sm") }}
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Publication Year</label>
+                            {{ form.publication_year(class="form-control form-control-sm") }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Shelf Location</label>
+                            {{ form.shelf_location(class="form-control form-control-sm") }}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100">Save Metadata Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
