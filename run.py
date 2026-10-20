@@ -1,3 +1,11 @@
+import os
+import sys
+
+# Ensure project root is always in sys.path
+basedir = os.path.abspath(os.path.dirname(__file__))
+if basedir not in sys.path:
+    sys.path.insert(0, basedir)
+
 from app import create_app
 from app.extensions import db
 from app.models import Book

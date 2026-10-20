@@ -210,3 +210,23 @@ class PDCACycleForm(FlaskForm):
     target_achieved = BooleanField("CHECK: Target Metric Achieved")
     standardization_action = TextAreaField("ACT: Standardization & SOP Update", validators=[Optional()])
     next_cycle_recommendations = TextAreaField("ACT: Next Cycle Recommendations", validators=[Optional()])
+
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField("Current Password", validators=[DataRequired()])
+    new_password = PasswordField(
+        "New Password",
+        validators=[DataRequired(), Length(min=6, max=128)],
+    )
+    confirm_new_password = PasswordField(
+        "Confirm New Password",
+        validators=[DataRequired(), EqualTo("new_password", message="New passwords must match.")],
+    )
+
+
+class EditProfileForm(FlaskForm):
+    full_name = StringField("Full Name", validators=[DataRequired(), Length(min=2, max=120)])
+    email = StringField("Email Address", validators=[DataRequired(), Length(max=120), validate_email_format])
+    phone = StringField("Phone Number", validators=[Optional(), Length(max=32)])
+    department = StringField("Department / Faculty", validators=[Optional(), Length(max=100)])
+

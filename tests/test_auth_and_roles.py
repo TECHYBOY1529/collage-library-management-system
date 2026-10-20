@@ -93,3 +93,68 @@ def test_input_validation_and_audit_password_redaction(client, app):
         assert len(logs) > 0
         for log in logs:
             assert "AdminPass123" not in log.details
+
+
+def test_user_profile_update_and_password_change(client, app):
+    # Login as student1
+    login_as(client, "student1", "StudPass123")
+
+    # 1. Access profile page
+    resp = client.get("/profile")
+    assert resp.status_code == 200
+    assert b"Account Settings & Profile" in resp.data
+
+    # 2. Update profile details
+    resp_update = client.post(
+        "/profile",
+        data={
+            "form_type": "update_profile",
+            "prof-full_name": "Student One Updated",
+            "prof-email": "student1_updated@college.edu",
+            "prof-phone": "9988776655",
+            "prof-department": "Robotics",
+        },
+        follow_redirects=True,
+    )
+    assert resp_update.status_code == 200
+    assert b"Profile updated successfully" in resp_update.data
+
+    with app.app_context():
+        u = User.query.filter_by(username="student1").first()
+        assert u.full_name == "Student One Updated"
+        assert u.email == "student1_updated@college.edu"
+        assert u.member_profile.phone == "9988776655"
+        assert u.member_profile.department == "Robotics"
+
+    # 3. Change password with incorrect current password -> should fail
+    resp_bad_pwd = client.post(
+        "/profile",
+        data={
+            "form_type": "change_password",
+            "pwd-current_password": "WrongPassword!",
+            "pwd-new_password": "NewStudentPass1",
+            "pwd-confirm_new_password": "NewStudentPass1",
+        },
+        follow_redirects=True,
+    )
+    assert b"Current password entered is incorrect" in resp_bad_pwd.data
+
+    # 4. Change password with correct current password -> should succeed
+    resp_good_pwd = client.post(
+        "/profile",
+        data={
+            "form_type": "change_password",
+            "pwd-current_password": "StudPass123",
+            "pwd-new_password": "NewStudentPass1",
+            "pwd-confirm_new_password": "NewStudentPass1",
+        },
+        follow_redirects=True,
+    )
+    assert b"Password changed successfully" in resp_good_pwd.data
+
+    # 5. Logout and login with new password
+    client.get("/logout")
+    login_new = login_as(client, "student1", "NewStudentPass1")
+    assert login_new.status_code == 200
+    assert b"Member Portal" in login_new.data
+

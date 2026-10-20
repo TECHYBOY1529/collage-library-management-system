@@ -102,10 +102,13 @@
                     {% endif %}
                 </a>
                 {% endif %}
-                <div class="text-end d-none d-sm-block">
-                    <div class="fw-semibold small">{{ current_user.full_name }}</div>
+                <a href="{{ url_for('auth.profile') }}" class="text-decoration-none text-end d-none d-sm-block text-reset">
+                    <div class="fw-semibold small text-dark">{{ current_user.full_name }} <i class="bi bi-gear-fill text-muted" style="font-size: 0.75rem;"></i></div>
                     <div class="text-muted" style="font-size: 0.75rem;">@{{ current_user.username }} &bull; {{ current_user.role.replace('_', ' ').title() }}</div>
-                </div>
+                </a>
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-sm btn-outline-secondary" title="Account Settings">
+                    <i class="bi bi-person-gear"></i>
+                </a>
                 <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </a>

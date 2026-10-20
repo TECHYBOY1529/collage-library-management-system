@@ -18,6 +18,7 @@ ALLOWED_PATHS = [
     "tests",
     "docs",
     "scripts",
+    "migrations",
     "config.py",
     "run.py",
     "seed.py",

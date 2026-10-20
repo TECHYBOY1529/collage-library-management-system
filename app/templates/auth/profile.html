@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Account Settings & Profile | College Library{% endblock %}
+{% block page_heading %}Account Settings & Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row g-4">
+        <!-- User Overview Card -->
+        <div class="col-lg-4">
+            <div class="card card-clean shadow-sm mb-4">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
+                        <i class="bi bi-person-circle fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1">{{ user.full_name }}</h5>
+                    <div class="text-muted small mb-2">@{{ user.username }}</div>
+                    <span class="badge bg-secondary text-uppercase px-3 py-1 mb-3">{{ user.role.replace('_', ' ') }}</span>
+
+                    <hr class="my-3 opacity-25">
+
+                    <div class="text-start small space-y-2">
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Account Status:</span>
+                            <span class="badge bg-success-subtle text-success">Active</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Email:</span>
+                            <span class="fw-semibold">{{ user.email }}</span>
+                        </div>
+                        {% if user.member_profile %}
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Membership ID:</span>
+                            <span class="fw-semibold text-info">{{ user.member_profile.membership_number }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Member Type:</span>
+                            <span class="fw-semibold">{{ user.member_profile.member_type }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Department:</span>
+                            <span class="fw-semibold">{{ user.member_profile.department or 'General' }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Max Allowed Books:</span>
+                            <span class="badge bg-info-subtle text-info">{{ user.member_profile.max_books_allowed }} copies</span>
+                        </div>
+                        {% endif %}
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Account Tag:</span>
+                            {% if user.is_demo %}
+                            <span class="badge bg-warning text-dark">Demo Record</span>
+                            {% else %}
+                            <span class="badge bg-light text-dark border">Live Account</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forms: Profile Details & Password Change -->
+        <div class="col-lg-8">
+            <!-- Edit Profile Details -->
+            <div class="card card-clean shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-pencil-square text-primary me-2"></i>Update Personal Details</h6>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('auth.profile') }}">
+                        {{ profile_form.csrf_token }}
+                        <input type="hidden" name="form_type" value="update_profile">
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Full Name</label>
+                                {{ profile_form.full_name(class="form-control" + (" is-invalid" if profile_form.full_name.errors else ""), value=user.full_name) }}
+                                {% for err in profile_form.full_name.errors %}
+                                <div class="invalid-feedback">{{ err }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Email Address</label>
+                                {{ profile_form.email(class="form-control" + (" is-invalid" if profile_form.email.errors else ""), value=user.email) }}
+                                {% for err in profile_form.email.errors %}
+                                <div class="invalid-feedback">{{ err }}</div>
+                                {% endfor %}
+                            </div>
+
+                            {% if user.member_profile %}
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Phone Number</label>
+                                {{ profile_form.phone(class="form-control" + (" is-invalid" if profile_form.phone.errors else ""), value=user.member_profile.phone or '') }}
+                                {% for err in profile_form.phone.errors %}
+                                <div class="invalid-feedback">{{ err }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Department / Faculty</label>
+                                {{ profile_form.department(class="form-control" + (" is-invalid" if profile_form.department.errors else ""), value=user.member_profile.department or '') }}
+                                {% for err in profile_form.department.errors %}
+                                <div class="invalid-feedback">{{ err }}</div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <div class="col-12 text-end mt-3">
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="bi bi-check2"></i> Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Change Password -->
+            <div class="card card-clean shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-shield-lock text-warning me-2"></i>Change Password</h6>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('auth.profile') }}">
+                        {{ password_form.csrf_token }}
+                        <input type="hidden" name="form_type" value="change_password">
+
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label small fw-semibold">Current Password</label>
+                                {{ password_form.current_password(class="form-control" + (" is-invalid" if password_form.current_password.errors else ""), placeholder="Enter existing password") }}
+                                {% for err in password_form.current_password.errors %}
+                                <div class="invalid-feedback">{{ err }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">New Password</label>
+                                {{ password_form.new_password(class="form-control" + (" is-invalid" if password_form.new_password.errors else ""), placeholder="At least 6 characters") }}
+                                {% for err in password_form.new_password.errors %}
+                                <div class="invalid-feedback">{{ err }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Confirm New Password</label>
+                                {{ password_form.confirm_new_password(class="form-control" + (" is-invalid" if password_form.confirm_new_password.errors else ""), placeholder="Re-type new password") }}
+                                {% for err in password_form.confirm_new_password.errors %}
+                                <div class="invalid-feedback">{{ err }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="col-12 text-end mt-3">
+                                <button type="submit" class="btn btn-warning px-4 text-dark fw-semibold">
+                                    <i class="bi bi-key"></i> Update Password
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

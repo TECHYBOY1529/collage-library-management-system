@@ -108,6 +108,7 @@ Execute the complete unit and integration test suite with:
 
 ## 5. Documentation & Diagrams Index
 
+- **[College Professor Demonstration & Viva Guide](docs/DEMONSTRATION_GUIDE.md)**: 5-minute step-by-step walkthrough script, evaluation checklist, and common viva questions with model answers.
 - **[Architecture, ER Diagram & Workflows](docs/ARCHITECTURE_AND_DIAGRAMS.md)**: Mermaid system architecture, 19-table Entity-Relationship diagram, and standardized book issue/return sequence diagram.
 - **[TQM Methodology & 10 KPI Formulas](docs/TQM_AND_KPI_GUIDE.md)**: Detailed formulas, measurement periods, data sources, and SPC 3-sigma rules.
 - **[18-Section College Project Report Outline](docs/PROJECT_REPORT_OUTLINE.md)**: Complete academic report structure ready for college submission.

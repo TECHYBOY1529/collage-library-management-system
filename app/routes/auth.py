@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, session,
 from sqlalchemy.exc import SQLAlchemyError
 from app.extensions import db
 from app.models import User, Member, Role
-from app.forms import LoginForm, RegisterForm
+from app.forms import LoginForm, RegisterForm, ChangePasswordForm, EditProfileForm
 from app.decorators import get_current_user
 from app.services.audit_service import log_audit
 
@@ -138,3 +138,79 @@ def logout():
     session.clear()
     flash("You have been logged out safely.", "info")
     return redirect(url_for("auth.login"))
+
+
+@auth_bp.route("/profile", methods=["GET", "POST"])
+def profile():
+    user = get_current_user()
+    if not user:
+        return redirect(url_for("auth.login"))
+
+    profile_form = EditProfileForm(prefix="prof", obj=user)
+    if user.member_profile:
+        profile_form.phone.data = profile_form.phone.data or user.member_profile.phone
+        profile_form.department.data = profile_form.department.data or user.member_profile.department
+
+    password_form = ChangePasswordForm(prefix="pwd")
+    form_type = request.form.get("form_type")
+
+    if request.method == "POST" and form_type == "update_profile":
+        if profile_form.validate_on_submit():
+            email = profile_form.email.data.strip().lower()
+            existing_email = User.query.filter(User.email == email, User.id != user.id).first()
+            if existing_email:
+                flash("That email address is already in use by another account.", "danger")
+            else:
+                try:
+                    user.full_name = profile_form.full_name.data.strip()
+                    user.email = email
+                    if user.member_profile:
+                        user.member_profile.phone = (
+                            profile_form.phone.data.strip() if profile_form.phone.data else None
+                        )
+                        if profile_form.department.data:
+                            user.member_profile.department = profile_form.department.data.strip()
+                    log_audit(
+                        action="UPDATE_PROFILE",
+                        entity_type="User",
+                        entity_id=user.id,
+                        details=f"User '{user.username}' updated profile contact details.",
+                        actor=user,
+                        is_demo=user.is_demo,
+                        commit=True,
+                    )
+                    flash("Profile updated successfully.", "success")
+                    return redirect(url_for("auth.profile"))
+                except SQLAlchemyError:
+                    db.session.rollback()
+                    flash("Failed to update profile due to a database error.", "danger")
+
+    if request.method == "POST" and form_type == "change_password":
+        if password_form.validate_on_submit():
+            if not user.check_password(password_form.current_password.data):
+                flash("Current password entered is incorrect.", "danger")
+            else:
+                try:
+                    user.set_password(password_form.new_password.data)
+                    log_audit(
+                        action="CHANGE_PASSWORD",
+                        entity_type="User",
+                        entity_id=user.id,
+                        details=f"User '{user.username}' updated account password.",
+                        actor=user,
+                        is_demo=user.is_demo,
+                        commit=True,
+                    )
+                    flash("Password changed successfully.", "success")
+                    return redirect(url_for("auth.profile"))
+                except SQLAlchemyError:
+                    db.session.rollback()
+                    flash("Failed to update password due to a database error.", "danger")
+
+    return render_template(
+        "auth/profile.html",
+        user=user,
+        profile_form=profile_form,
+        password_form=password_form,
+    )
+
